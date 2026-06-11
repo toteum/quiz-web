@@ -8,6 +8,7 @@ app.secret_key = "chiave_segreta"
 
 def carica_domande():
     domande = []
+
     with open("domande.csv", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
 
@@ -37,7 +38,7 @@ def carica_domande():
     return domande
 
 
-# ✅ caricate UNA SOLA VOLTA
+# 🔥 DOMANDE GLOBALI (NON IN SESSIONE)
 DOMANDE = carica_domande()
 
 
@@ -45,6 +46,7 @@ DOMANDE = carica_domande()
 def home():
     session["i"] = 0
     session["punteggio"] = 0
+    session["storico"] = []
     session["risposto"] = False
     session["ultimo_risultato"] = None
     session["ultima_corrette"] = []
@@ -56,14 +58,37 @@ def home():
 def quiz():
     i = session.get("i", 0)
 
+    # 🏁 FINE QUIZ
     if i >= len(DOMANDE):
-        return f"""
-        <div style="text-align:center; margin-top:100px;">
+
+        storico = session.get("storico", [])
+
+        html = f"""
+        <div style="max-width:800px; margin:50px auto; font-family:Arial;">
             <h2>🏁 Quiz completato!</h2>
             <h3>Punteggio: {session['punteggio']} / {len(DOMANDE)}</h3>
-            <a href="/reset" class="btn btn-primary">🔄 Riprova</a>
+            <hr>
+        """
+
+        for idx, item in enumerate(storico, start=1):
+
+            esito = "✅" if item["corretto"] else "❌"
+
+            html += f"""
+            <div style="margin-bottom:20px; padding:10px; border:1px solid #ccc; border-radius:10px;">
+                <b>{idx}. {item['domanda']}</b>
+                <p>Esito: {esito}</p>
+                <p><b>Risposte corrette:</b> {", ".join(item['corrette'])}</p>
+                <p><b>Tue risposte:</b> {", ".join(item['selezionate'])}</p>
+            </div>
+            """
+
+        html += """
+            <a href="/reset" class="btn btn-primary">🔄 Riprova quiz</a>
         </div>
         """
+
+        return html
 
     return render_template(
         "index.html",
@@ -81,7 +106,9 @@ def risposta():
 
     selezionate = request.form.getlist("opzione")
 
-    if sorted(selezionate) == sorted(d["corrette"]):
+    corretto = sorted(selezionate) == sorted(d["corrette"])
+
+    if corretto:
         session["punteggio"] += 1
         session["ultimo_risultato"] = "corretto"
     else:
@@ -90,6 +117,20 @@ def risposta():
     session["ultima_corrette"] = d["corrette"]
     session["risposto"] = True
     session["ultime_selezionate"] = selezionate
+
+    # 🔥 SALVATAGGIO STORICO
+    corrette_idx = d["corrette"]
+    selezionate_idx = selezionate
+
+    corrette_testo = [d["opzioni"][int(i) - 1] for i in corrette_idx]
+    selezionate_testo = [d["opzioni"][int(i) - 1] for i in selezionate_idx]
+
+    session["storico"].append({
+        "domanda": d["domanda"],
+        "corrette": corrette_testo,
+        "selezionate": selezionate_testo,
+        "corretto": corretto
+    })
 
     return quiz()
 
