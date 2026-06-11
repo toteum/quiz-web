@@ -15,9 +15,7 @@ def carica_domande():
             opzioni = riga["opzioni"].split(";")
             corrette_originali = riga["corrette"].split(";")
 
-            # trasforma in coppie (indice originale, testo)
             coppie = list(enumerate(opzioni, start=1))
-
             random.shuffle(coppie)
 
             nuove_opzioni = []
@@ -35,43 +33,43 @@ def carica_domande():
                 "corrette": nuove_corrette
             })
 
-    random.shuffle(domande)  # 🔥 shuffle domande
+    random.shuffle(domande)
     return domande
+
+
+# ✅ caricate UNA SOLA VOLTA
+DOMANDE = carica_domande()
 
 
 @app.route("/")
 def home():
-    session["domande"] = carica_domande()
     session["i"] = 0
     session["punteggio"] = 0
     session["risposto"] = False
     session["ultimo_risultato"] = None
     session["ultima_corrette"] = []
+    session["ultime_selezionate"] = []
     return quiz()
 
 
 @app.route("/quiz")
 def quiz():
     i = session.get("i", 0)
-    domande = session.get("domande", [])
 
-    if i >= len(domande):
+    if i >= len(DOMANDE):
         return f"""
         <div style="text-align:center; margin-top:100px;">
             <h2>🏁 Quiz completato!</h2>
-            <h3>Punteggio finale: {session['punteggio']} / {len(domande)}</h3>
-
-            <a href="/reset" class="btn btn-primary mt-4">
-                🔄 Riprova il quiz
-            </a>
+            <h3>Punteggio: {session['punteggio']} / {len(DOMANDE)}</h3>
+            <a href="/reset" class="btn btn-primary">🔄 Riprova</a>
         </div>
         """
 
     return render_template(
         "index.html",
-        domanda=domande[i],
+        domanda=DOMANDE[i],
         numero=i + 1,
-        totale=len(domande),
+        totale=len(DOMANDE),
         session=session
     )
 
@@ -79,8 +77,7 @@ def quiz():
 @app.route("/risposta", methods=["POST"])
 def risposta():
     i = session["i"]
-    domande = session["domande"]
-    d = domande[i]
+    d = DOMANDE[i]
 
     selezionate = request.form.getlist("opzione")
 
@@ -106,6 +103,7 @@ def next_question():
     session["ultime_selezionate"] = []
 
     return quiz()
+
 
 @app.route("/reset")
 def reset():
