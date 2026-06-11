@@ -11,8 +11,6 @@ To get started with this project, you will need to have Python installed (3.12) 
 
 ## Download the Repository:
 
-https://gitlab.com/martina.casari.93/flaskproject_webtech
-
 To download the repository, click on the green "Code" button and select "Download ZIP". Once the ZIP file has been downloaded, extract the contents to a folder on your computer.
 
 ## PyCharm IDE:
