@@ -1,7 +1,9 @@
-# Flask Project for WebTech Class
+# QUIZ WEB
 
+Edit the domande.csv file to add or change questions
 
-This repository contains a simple Flask web application with three pages: Home, About, and Contact. It also includes basic styling with CSS. This project is intended to be a starting point for students learning about Flask development.
+## WebApp
+https://quiz-web-8h1c.onrender.com/
 
 ## Getting Started
 
