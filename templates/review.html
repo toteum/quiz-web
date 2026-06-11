@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Revisione Quiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <div class="text-center mb-4">
+        <h2>📊 Revisione Quiz</h2>
+        <p class="text-muted">
+            Punteggio attuale: <b>{{ punteggio }}</b> / {{ totale }}
+        </p>
+    </div>
+
+    {% for item in storico %}
+    <div class="card mb-3 shadow-sm p-3">
+
+        <h5>{{ loop.index }}. {{ item.domanda }}</h5>
+
+        {% if item.corretto %}
+            <span class="badge bg-success">Corretto</span>
+        {% else %}
+            <span class="badge bg-danger">Sbagliato</span>
+        {% endif %}
+
+        <hr>
+
+        <p><b>✔ Risposte corrette:</b></p>
+        <ul>
+            {% for r in item.corrette %}
+                <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+
+        <p><b>✏️ Le tue risposte:</b></p>
+        <ul>
+            {% for r in item.selezionate %}
+                <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+
+    </div>
+    {% endfor %}
+
+    <a href="/reset" class="btn btn-primary w-100 mt-3">
+        🔄 Ricomincia quiz
+    </a>
+
+</div>
+
+</body>
+</html>

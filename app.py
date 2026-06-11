@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect, url_for
 import csv
 import random
 
@@ -60,35 +60,7 @@ def quiz():
 
     # 🏁 FINE QUIZ
     if i >= len(DOMANDE):
-
-        storico = session.get("storico", [])
-
-        html = f"""
-        <div style="max-width:800px; margin:50px auto; font-family:Arial;">
-            <h2>🏁 Quiz completato!</h2>
-            <h3>Punteggio: {session['punteggio']} / {len(DOMANDE)}</h3>
-            <hr>
-        """
-
-        for idx, item in enumerate(storico, start=1):
-
-            esito = "✅" if item["corretto"] else "❌"
-
-            html += f"""
-            <div style="margin-bottom:20px; padding:10px; border:1px solid #ccc; border-radius:10px;">
-                <b>{idx}. {item['domanda']}</b>
-                <p>Esito: {esito}</p>
-                <p><b>Risposte corrette:</b> {", ".join(item['corrette'])}</p>
-                <p><b>Tue risposte:</b> {", ".join(item['selezionate'])}</p>
-            </div>
-            """
-
-        html += """
-            <a href="/reset" class="btn btn-primary">🔄 Riprova quiz</a>
-        </div>
-        """
-
-        return html
+        return redirect(url_for("termina"))
 
     return render_template(
         "index.html",
@@ -143,13 +115,25 @@ def next_question():
     session["ultima_corrette"] = []
     session["ultime_selezionate"] = []
 
-    return quiz()
+    return redirect(url_for("quiz"))
 
 
 @app.route("/reset")
 def reset():
     session.clear()
     return home()
+
+@app.route("/termina")
+def termina():
+    storico = session.get("storico", [])
+    punteggio = session.get("punteggio", 0)
+
+    return render_template(
+        "review.html",
+        storico=storico,
+        punteggio=punteggio,
+        totale=len(storico)
+    )
 
 
 if __name__ == "__main__":
