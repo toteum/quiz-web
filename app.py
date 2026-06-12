@@ -1,9 +1,15 @@
 from flask import Flask, render_template, request, session, redirect, url_for
+from flask_session import Session
 import csv
 import random
 
 app = Flask(__name__)
 app.secret_key = "chiave_segreta"
+
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+
+Session(app)
 
 
 def carica_domande():
