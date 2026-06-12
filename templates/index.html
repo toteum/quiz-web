@@ -33,7 +33,8 @@
                        {% endif %}>
 
                 <label class="form-check-label" for="op{{ loop.index }}">
-                    {{ loop.index }}. {{ opzione }}
+                    <span class="fw-bold text-primary">{{ loop.index }}.</span>
+                    <span>{{ opzione }}</span>
                 </label>
             </div>
             {% endfor %}
