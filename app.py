@@ -79,12 +79,20 @@ def quiz():
 
 @app.route("/risposta", methods=["POST"])
 def risposta():
+
+    if session.get("risposto"):
+        return redirect(url_for("quiz"))
+
     i = session["i"]
+
+    if i >= len(DOMANDE):
+        return redirect(url_for("termina"))
+
     d = DOMANDE[i]
 
     selezionate = request.form.getlist("opzione")
 
-    corretto = sorted(selezionate) == sorted(d["corrette"])
+    corretto = set(selezionate) == set(d["corrette"])
 
     if corretto:
         session["punteggio"] += 1
@@ -96,21 +104,30 @@ def risposta():
     session["risposto"] = True
     session["ultime_selezionate"] = selezionate
 
-    # 🔥 SALVATAGGIO STORICO
-    corrette_idx = d["corrette"]
-    selezionate_idx = selezionate
+    corrette_testo = [
+        d["opzioni"][int(x) - 1]
+        for x in d["corrette"]
+    ]
 
-    corrette_testo = [d["opzioni"][int(i) - 1] for i in corrette_idx]
-    selezionate_testo = [d["opzioni"][int(i) - 1] for i in selezionate_idx]
+    selezionate_testo = [
+        d["opzioni"][int(x) - 1]
+        for x in selezionate
+    ]
 
-    session["storico"].append({
+    storico = session.get("storico", [])
+
+    storico.append({
         "domanda": d["domanda"],
         "corrette": corrette_testo,
         "selezionate": selezionate_testo,
         "corretto": corretto
     })
 
-    return quiz()
+    session["storico"] = storico
+
+    return redirect(url_for("quiz"))
+
+
 
 
 @app.route("/next")
