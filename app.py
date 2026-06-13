@@ -44,7 +44,7 @@ def carica_domande():
     return domande
 
 
-# 🔥 DOMANDE GLOBALI (NON IN SESSIONE)
+
 DOMANDE = carica_domande()
 
 
@@ -57,38 +57,44 @@ def home():
     session["ultimo_risultato"] = None
     session["ultima_corrette"] = []
     session["ultime_selezionate"] = []
-    return quiz()
+    session["modalita"] = None
+    session.pop("domande_ritenta", None)
+    return redirect(url_for("quiz"))
 
 
 @app.route("/quiz")
 def quiz():
     i = session.get("i", 0)
+    domande = get_domande()
 
-    # 🏁 FINE QUIZ
-    if i >= len(DOMANDE):
+    if i >= len(domande):
         return redirect(url_for("termina"))
 
     return render_template(
         "index.html",
-        domanda=DOMANDE[i],
+        domanda=domande[i],
         numero=i + 1,
-        totale=len(DOMANDE),
+        totale=len(domande),
         session=session
     )
+def get_domande():
+    if session.get("modalita") == "ritenta":
+        return session.get("domande_ritenta", [])
+    return DOMANDE
 
 
 @app.route("/risposta", methods=["POST"])
 def risposta():
-
     if session.get("risposto"):
         return redirect(url_for("quiz"))
 
     i = session["i"]
+    domande = get_domande()
 
-    if i >= len(DOMANDE):
+    if i >= len(domande):
         return redirect(url_for("termina"))
 
-    d = DOMANDE[i]
+    d = domande[i]
 
     selezionate = request.form.getlist("opzione")
 
@@ -118,6 +124,7 @@ def risposta():
 
     storico.append({
         "domanda": d["domanda"],
+        "opzioni": d["opzioni"],
         "corrette": corrette_testo,
         "selezionate": selezionate_testo,
         "corretto": corretto
@@ -143,20 +150,84 @@ def next_question():
 
 @app.route("/reset")
 def reset():
+    global DOMANDE
+    DOMANDE = carica_domande()
     session.clear()
-    return home()
+    return redirect(url_for("home"))
 
 @app.route("/termina")
 def termina():
     storico = session.get("storico", [])
     punteggio = session.get("punteggio", 0)
+    n_sbagliate = len([x for x in session.get("storico", []) if not x["corretto"]])
 
     return render_template(
         "review.html",
         storico=storico,
         punteggio=punteggio,
-        totale=len(storico)
+        totale=len(storico),
+        n_sbagliate = n_sbagliate
     )
+
+
+@app.route("/review")
+def review():
+    filtro = request.args.get("filtro", "tutti")
+
+    storico = session.get("storico", [])
+    n_sbagliate = len([x for x in session.get("storico", []) if not x["corretto"]])
+
+    if filtro == "corretti":
+        storico = [x for x in storico if x["corretto"]]
+    elif filtro == "sbagliati":
+        storico = [x for x in storico if not x["corretto"]]
+
+    return render_template(
+        "review.html",
+        storico=storico,
+        punteggio=session.get("punteggio", 0),
+        totale=len(session.get("storico", [])),
+        filtro=filtro,
+        n_sbagliate=n_sbagliate
+    )
+
+
+@app.route("/ritenta")
+def ritenta():
+    storico = session.get("storico", [])
+    sbagliate = [e for e in storico if not e["corretto"]]
+
+    if not sbagliate:
+        return redirect(url_for("termina"))
+
+    nuove_domande = []
+    for entry in sbagliate:
+        opzioni = entry["opzioni"][:]
+        random.shuffle(opzioni)
+
+        corrette_idx = [
+            str(opzioni.index(c) + 1) for c in entry["corrette"]
+        ]
+
+        nuove_domande.append({
+            "domanda": entry["domanda"],
+            "opzioni": opzioni,
+            "corrette": corrette_idx
+        })
+
+    random.shuffle(nuove_domande)
+
+    session["domande_ritenta"] = nuove_domande
+    session["i"] = 0
+    session["punteggio"] = 0
+    session["storico"] = []
+    session["risposto"] = False
+    session["ultimo_risultato"] = None
+    session["ultima_corrette"] = []
+    session["ultime_selezionate"] = []
+    session["modalita"] = "ritenta"
+
+    return redirect(url_for("quiz"))
 
 
 if __name__ == "__main__":

@@ -17,15 +17,42 @@
         </p>
     </div>
 
+    <div class="text-center text-muted mb-3">
+        Corrette:
+        <span class="text-success fw-bold">
+            {{ storico|selectattr("corretto", "equalto", True)|list|length }}
+        </span>
+        |
+        Sbagliate:
+        <span class="text-danger fw-bold">
+            {{ storico|rejectattr("corretto", "equalto", True)|list|length }}
+        </span>
+    </div>
+
+    <div class="d-flex justify-content-center gap-2 mb-4">
+        <a href="/review?filtro=tutti"
+           class="btn btn-outline-primary {% if filtro == 'tutti' %}active{% endif %}">
+            Tutte
+        </a>
+        <a href="/review?filtro=corretti"
+           class="btn btn-outline-success {% if filtro == 'corretti' %}active{% endif %}">
+            Solo corrette
+        </a>
+        <a href="/review?filtro=sbagliati"
+           class="btn btn-outline-danger {% if filtro == 'sbagliati' %}active{% endif %}">
+            Solo sbagliate
+        </a>
+    </div>
+
     {% for item in storico %}
     <div class="card mb-3 shadow-sm p-3">
 
         <h5>{{ loop.index }}. {{ item.domanda }}</h5>
 
         {% if item.corretto %}
-            <span class="badge bg-success">Corretto</span>
+            <span class="badge bg-success">Corretto ✔</span>
         {% else %}
-            <span class="badge bg-danger">Sbagliato</span>
+            <span class="badge bg-danger">Sbagliato ✗</span>
         {% endif %}
 
         <hr>
@@ -47,9 +74,21 @@
     </div>
     {% endfor %}
 
-    <a href="/reset" class="btn btn-primary w-100 mt-3">
-        🔄 Ricomincia quiz
-    </a>
+
+
+    <div class="d-grid gap-2 mt-4">
+
+        {% if n_sbagliate > 0 %}
+        <a href="{{ url_for('ritenta') }}" class="btn btn-danger">
+            🔁 Ritenta le {{ n_sbagliate }} domande sbagliate
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('reset') }}" class="btn btn-primary">
+            🔄 Nuovo quiz con tutte le domande
+        </a>
+
+    </div>
 
 </div>
 
